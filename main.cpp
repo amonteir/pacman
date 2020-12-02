@@ -2,15 +2,78 @@
 //
 
 #include <iostream>
-#include <SDL2/SDL.h>
+#include "Screen.h"
+#include "Logging.h"
+#include "Timer.h"
+#include <string>
 
-int main(int argc, char** argv)
+using namespace angelogames;
+
+int main(int argc, char* args[])
 {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
-        return 1;
+    Logging* log = new Logging("main.log");
+    Screen* screen = new Screen();
+    log->write("Pacman game is starting.");
+
+    //Main game loop flag
+    bool quit = false;
+
+    //The frames per second timer
+    Timer fps_timer;
+
+    //Event handler
+    SDL_Event e;
+
+    //Start counting frames per second
+    int countedFrames = 0;
+    fps_timer.start();
+
+    while (!quit) {
+
+        /////////////
+        // Handle events on queue
+        while (SDL_PollEvent(&e) != 0) {
+
+            //User requests quit
+            if (e.type == SDL_QUIT) {
+                //screen->playSound("QUIT");
+                //SDL_Delay(2000);
+                quit = true;
+            }
+            else {
+                screen->EventHandler(e);
+            }
+        }
+
+        //Calculate and correct fps
+        float avg_fps = countedFrames / (fps_timer.getTicks() / 1000.f);
+        if (avg_fps > 2000000)
+        {
+            avg_fps = 0;
+        }
+        std::string fps_msg = "FPS = " + std::to_string(avg_fps);
+        //log->write(fps_msg);
+
+        /////////////
+        // Move objects
+        screen->MoveObjects();
+
+        /////////////
+        // Render objects
+        screen->RenderObjects();
+
+        /////////////
+        // Update screen
+        screen->UpdateScreen();
+
+        ++countedFrames;
+
     }
 
-    SDL_Quit();
+    screen->Close();
+
+    delete log;
+    delete screen;
+
     return 0;
 }
